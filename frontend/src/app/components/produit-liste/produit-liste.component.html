@@ -1,0 +1,102 @@
+<!-- Toast notification -->
+<div *ngIf="toast" class="toast" [ngClass]="'toast-' + toast.type">
+  {{ toast.message }}
+</div>
+
+<!-- Page header -->
+<div class="page-header">
+  <h2>Catalogue Produits</h2>
+  <a routerLink="/produits/nouveau" class="btn btn-primary">+ Nouveau Produit</a>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value">{{ totalProduits }}</div>
+    <div class="stat-label">Produits actifs</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" [style.color]="produitsStockBas > 0 ? 'var(--danger)' : 'var(--success)'">
+      {{ produitsStockBas }}
+    </div>
+    <div class="stat-label">Stock bas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ valeurTotaleStock | number:'1.2-2' }} DH</div>
+    <div class="stat-label">Valeur du stock</div>
+  </div>
+</div>
+
+<!-- Filtres de recherche -->
+<div class="card">
+  <div class="filters-bar">
+    <input type="text" placeholder="Rechercher par désignation..."
+           [(ngModel)]="filtreDesignation" (keyup.enter)="rechercher()">
+    <select [(ngModel)]="filtreCategorie">
+      <option [ngValue]="null">Toutes les catégories</option>
+      <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option>
+    </select>
+    <input type="number" placeholder="Prix min" [(ngModel)]="filtrePrixMin" style="width: 120px;">
+    <input type="number" placeholder="Prix max" [(ngModel)]="filtrePrixMax" style="width: 120px;">
+    <button class="btn btn-primary btn-sm" (click)="rechercher()">Rechercher</button>
+    <button class="btn btn-outline btn-sm" (click)="reinitialiserFiltres()">Réinitialiser</button>
+  </div>
+</div>
+
+<!-- Tableau des produits -->
+<div class="card">
+  <div *ngIf="loading" class="loading-state">Chargement...</div>
+
+  <div *ngIf="!loading && produits.length === 0" class="empty-state">
+    Aucun produit trouvé. Commencez par en créer un !
+  </div>
+
+  <div *ngIf="!loading && produits.length > 0" class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Référence</th>
+          <th>Désignation</th>
+          <th>Catégorie</th>
+          <th>Prix HT</th>
+          <th>Prix TTC</th>
+          <th>Stock</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let produit of produits">
+          <td><span class="ref-badge">{{ produit.reference }}</span></td>
+          <td>
+            <strong>{{ produit.designation }}</strong>
+            <div class="text-muted" *ngIf="produit.description">
+              {{ produit.description | slice:0:60 }}{{ produit.description.length > 60 ? '...' : '' }}
+            </div>
+          </td>
+          <td>
+            <span class="badge badge-info" *ngIf="produit.categorieNom">{{ produit.categorieNom }}</span>
+            <span class="text-muted" *ngIf="!produit.categorieNom">—</span>
+          </td>
+          <td>{{ produit.prixHT | number:'1.2-2' }} DH</td>
+          <td>{{ produit.prixTTC | number:'1.2-2' }} DH</td>
+          <td>
+            <span [ngClass]="produit.stockBas ? 'stock-danger' : 'stock-ok'">
+              {{ produit.quantiteStock }}
+            </span>
+          </td>
+          <td>
+            <span *ngIf="produit.stockBas" class="badge badge-danger">Stock bas</span>
+            <span *ngIf="!produit.stockBas" class="badge badge-success">OK</span>
+          </td>
+          <td>
+            <div class="actions">
+              <a [routerLink]="['/produits/modifier', produit.id]" class="btn btn-outline btn-sm">Modifier</a>
+              <button class="btn btn-danger btn-sm" (click)="archiverProduit(produit)">Archiver</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
