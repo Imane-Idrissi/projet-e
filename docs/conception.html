@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Conception — Module Produits & Catalogue</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; }
+    header { background: #4361EE; color: white; padding: 32px 48px; }
+    header h1 { font-size: 28px; margin-bottom: 4px; }
+    header p { opacity: 0.85; font-size: 15px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+    .diagram-section {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .diagram-section h2 {
+      font-size: 20px;
+      margin-bottom: 6px;
+      color: #4361EE;
+    }
+    .diagram-section .desc {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .mermaid { display: flex; justify-content: center; }
+    .mermaid svg { max-width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+    th { background: #f0f2ff; text-align: left; padding: 10px 14px; font-weight: 600; }
+    td { padding: 10px 14px; border-bottom: 1px solid #eee; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .badge-blue { background: #EEF1FF; color: #4361EE; }
+    .badge-green { background: #F0FDF4; color: #22C55E; }
+    .badge-red { background: #FEF2F2; color: #EF4444; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Conception — Module EP03 : Produits & Catalogue</h1>
+  <p>Diagrammes UML — Gestion Commerciale | Imane Idrissi & Maha Souyah</p>
+</header>
+
+<div class="container">
+
+  <!-- ============================================ -->
+  <!-- 1. DIAGRAMME DE CLASSES -->
+  <!-- ============================================ -->
+  <div class="diagram-section">
+    <h2>1. Diagramme de Classes</h2>
+    <p class="desc">Architecture des entités du module Produits & Catalogue avec leurs attributs, méthodes et relations.</p>
+    <div class="mermaid">
+classDiagram
+    class Produit {
+        -Long id
+        -String reference
+        -String designation
+        -String description
+        -BigDecimal prixHT
+        -BigDecimal tauxTVA
+        -Integer quantiteStock
+        -Integer seuilAlerte
+        -Boolean actif
+        -LocalDateTime dateCreation
+        -LocalDateTime dateModification
+        +getPrixTTC() BigDecimal
+        +isStockBas() boolean
+    }
+
+    class Categorie {
+        -Long id
+        -String nom
+        -String description
+        -LocalDateTime dateCreation
+    }
+
+    class ProduitService {
+        +listerProduitsActifs() List~ProduitDTO~
+        +obtenirProduit(id) ProduitDTO
+        +creerProduit(request) ProduitDTO
+        +modifierProduit(id, request) ProduitDTO
+        +archiverProduit(id) void
+        +rechercher(designation, categorieId, prixMin, prixMax) List~ProduitDTO~
+        +listerProduitsStockBas() List~ProduitDTO~
+        -genererReference() String
+    }
+
+    class CategorieService {
+        +listerCategoriesRacines() List~CategorieDTO~
+        +listerToutes() List~CategorieDTO~
+        +creerCategorie(request) CategorieDTO
+        +modifierCategorie(id, request) CategorieDTO
+        +supprimerCategorie(id) void
+    }
+
+    class ProduitController {
+        +GET /api/produits
+        +GET /api/produits/id
+        +POST /api/produits
+        +PUT /api/produits/id
+        +DELETE /api/produits/id
+        +GET /api/produits/recherche
+        +GET /api/produits/stock-bas
+    }
+
+    class CategorieController {
+        +GET /api/categories
+        +GET /api/categories/toutes
+        +POST /api/categories
+        +PUT /api/categories/id
+        +DELETE /api/categories/id
+    }
+
+    class ProduitRepository {
+        &lt;&lt;interface&gt;&gt;
+        +findByActifTrue()
+        +findProduitsStockBas()
+        +findDerniereReference()
+        +rechercher()
+    }
+
+    class CategorieRepository {
+        &lt;&lt;interface&gt;&gt;
+        +findByParentIsNull()
+        +findByParentId()
+        +existsByNom()
+    }
+
+    Produit "*" --> "0..1" Categorie : appartient à
+    Categorie "0..*" --> "0..1" Categorie : sous-catégorie de
+    ProduitController --> ProduitService
+    CategorieController --> CategorieService
+    ProduitService --> ProduitRepository
+    ProduitService --> CategorieRepository
+    CategorieService --> CategorieRepository
+    CategorieService --> ProduitRepository
+    ProduitRepository ..> Produit
+    CategorieRepository ..> Categorie
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 2. DIAGRAMME DE CAS D'UTILISATION -->
+  <!-- ============================================ -->
+  <div class="diagram-section">
+    <h2>2. Diagramme de Cas d'Utilisation</h2>
+    <p class="desc">Acteurs et fonctionnalités du module Produits & Catalogue.</p>
+    <div class="mermaid">
+flowchart LR
+    Admin["👤 Administrateur"]
+    Commercial["👤 Commercial"]
+    Systeme["⚙️ Système"]
+
+    subgraph UC["Module Produits & Catalogue"]
+        UC1["Créer un produit\n(US-PRD-01)"]
+        UC2["Modifier un produit\n(US-PRD-02)"]
+        UC3["Archiver un produit\n(RG-PRD-04)"]
+        UC4["Rechercher / Filtrer\n(US-PRD-04)"]
+        UC5["Consulter le catalogue"]
+        UC6["Gérer les catégories\n(US-PRD-03)"]
+        UC7["Alertes stock bas\n(US-PRD-05)"]
+        UC8["Générer référence auto\n(RG-PRD-01)"]
+    end
+
+    Admin --> UC1
+    Admin --> UC2
+    Admin --> UC3
+    Admin --> UC4
+    Admin --> UC5
+    Admin --> UC6
+    Admin --> UC7
+    Commercial --> UC4
+    Commercial --> UC5
+    Systeme --> UC7
+    Systeme --> UC8
+    UC1 -.->|"inclut"| UC8
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 3. DIAGRAMME DE SEQUENCE : Créer un produit -->
+  <!-- ============================================ -->
+  <div class="diagram-section">
+    <h2>3. Diagramme de Séquence — Créer un produit</h2>
+    <p class="desc">Flux complet de la création d'un produit depuis l'interface Angular jusqu'à la persistance.</p>
+    <div class="mermaid">
+sequenceDiagram
+    actor U as Utilisateur
+    participant A as Angular Frontend
+    participant C as ProduitController
+    participant S as ProduitService
+    participant R as ProduitRepository
+    participant DB as Base de données
+
+    U->>A: Remplit le formulaire produit
+    A->>A: Validation côté client
+    A->>C: POST /api/produits (JSON)
+    C->>C: Validation Jakarta (@Valid)
+    C->>S: creerProduit(request)
+    S->>R: findDerniereReference()
+    R->>DB: SELECT reference ORDER BY id DESC
+    DB-->>R: "PRD-00006"
+    R-->>S: "PRD-00006"
+    S->>S: Génère "PRD-00007"
+    S->>R: save(produit)
+    R->>DB: INSERT INTO produits
+    DB-->>R: Produit persisté
+    R-->>S: Produit avec ID
+    S-->>C: ProduitDTO
+    C-->>A: 201 Created + JSON
+    A-->>U: Redirection vers la liste
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 4. DIAGRAMME DE SEQUENCE : Archiver un produit -->
+  <!-- ============================================ -->
+  <div class="diagram-section">
+    <h2>4. Diagramme de Séquence — Archiver un produit</h2>
+    <p class="desc">Soft delete : le produit est désactivé, pas supprimé (RG-PRD-04).</p>
+    <div class="mermaid">
+sequenceDiagram
+    actor U as Utilisateur
+    participant A as Angular Frontend
+    participant C as ProduitController
+    participant S as ProduitService
+    participant R as ProduitRepository
+    participant DB as Base de données
+
+    U->>A: Clique "Archiver" sur un produit
+    A->>A: Confirmation (confirm dialog)
+    A->>C: DELETE /api/produits/5
+    C->>S: archiverProduit(5)
+    S->>R: findById(5)
+    R->>DB: SELECT * FROM produits WHERE id=5
+    DB-->>R: Produit trouvé
+    R-->>S: Produit
+    S->>S: produit.setActif(false)
+    S->>R: save(produit)
+    R->>DB: UPDATE produits SET actif=false WHERE id=5
+    DB-->>R: OK
+    R-->>S: Produit mis à jour
+    S-->>C: void
+    C-->>A: 204 No Content
+    A->>A: Recharge la liste
+    A-->>U: Produit disparu de la liste
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 5. DIAGRAMME DE SEQUENCE : Recherche multi-critères -->
+  <!-- ============================================ -->
+  <div class="diagram-section">
+    <h2>5. Diagramme de Séquence — Recherche multi-critères</h2>
+    <p class="desc">Filtrage des produits par désignation, catégorie et fourchette de prix (US-PRD-04).</p>
+    <div class="mermaid">
+sequenceDiagram
+    actor U as Utilisateur
+    participant A as Angular Frontend
+    participant C as ProduitController
+    participant S as ProduitService
+    participant R as ProduitRepository
+    participant DB as Base de données
+
+    U->>A: Saisit "Dell" + sélectionne "Informatique"
+    A->>C: GET /api/produits/recherche?designation=Dell&categorieId=2
+    C->>S: rechercher("Dell", 2, null, null)
+    S->>R: rechercher("Dell", 2, null, null)
+    R->>DB: SELECT * FROM produits WHERE actif=true AND designation LIKE '%Dell%' AND categorie_id=2
+    DB-->>R: Liste de produits
+    R-->>S: List Produit
+    S->>S: Conversion en DTOs
+    S-->>C: List ProduitDTO
+    C-->>A: 200 OK + JSON
+    A-->>U: Affiche les résultats filtrés
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 6. REGLES DE GESTION -->
+  <!-- ============================================ -->
+  <div class="diagram-section">
+    <h2>6. Règles de Gestion</h2>
+    <p class="desc">Récapitulatif des règles métier implémentées dans le module.</p>
+    <table>
+      <thead>
+        <tr><th>Code</th><th>Règle</th><th>Implémentation</th><th>Couche</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-blue">RG-PRD-01</span></td>
+          <td>Référence unique auto-générée au format <code>PRD-XXXXX</code></td>
+          <td><code>ProduitService.genererReference()</code></td>
+          <td>Service</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">RG-PRD-02</span></td>
+          <td>Le prix HT doit être strictement positif</td>
+          <td><code>@DecimalMin("0.01")</code> sur CreateProduitRequest</td>
+          <td>DTO / Validation</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">RG-PRD-03</span></td>
+          <td>Les catégories sont hiérarchiques (parent/enfant)</td>
+          <td>Relation <code>@ManyToOne</code> récursive sur Categorie</td>
+          <td>Entité</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-red">RG-PRD-04</span></td>
+          <td>Un produit est archivé (soft delete), jamais supprimé</td>
+          <td><code>ProduitService.archiverProduit()</code> → <code>actif = false</code></td>
+          <td>Service</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-red">RG-PRD-05</span></td>
+          <td>Alerte quand <code>quantiteStock ≤ seuilAlerte</code></td>
+          <td><code>Produit.isStockBas()</code> + <code>findProduitsStockBas()</code></td>
+          <td>Entité / Repository</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 7. ARCHITECTURE TECHNIQUE -->
+  <!-- ============================================ -->
+  <div class="diagram-section">
+    <h2>7. Architecture Technique</h2>
+    <p class="desc">Architecture en couches du module.</p>
+    <div class="mermaid">
+flowchart TB
+    subgraph Frontend["🖥️ Frontend — Angular 17"]
+        FP["ProduitListeComponent"]
+        FF["ProduitFormComponent"]
+        FC["CategorieListeComponent"]
+        FS["StockAlertesComponent"]
+        SV["ProduitService / CategorieService"]
+    end
+
+    subgraph Backend["⚙️ Backend — Spring Boot 3"]
+        CTR["Controllers\nProduitController\nCategorieController"]
+        SRV["Services\nProduitService\nCategorieService"]
+        REP["Repositories\nProduitRepository\nCategorieRepository"]
+        ENT["Entités JPA\nProduit\nCategorie"]
+    end
+
+    subgraph DB["🗄️ Base de données"]
+        T1["produits"]
+        T2["categories"]
+    end
+
+    FP & FF & FC & FS --> SV
+    SV -->|"HTTP REST\nJSON"| CTR
+    CTR --> SRV
+    SRV --> REP
+    REP --> ENT
+    ENT -->|"JPA / Hibernate"| T1 & T2
+    T2 -->|"FK parent_id"| T2
+    T1 -->|"FK categorie_id"| T2
+    </div>
+  </div>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    themeVariables: {
+      primaryColor: '#EEF1FF',
+      primaryBorderColor: '#4361EE',
+      primaryTextColor: '#1a1a1a',
+      lineColor: '#4361EE',
+      secondaryColor: '#F0FDF4',
+      tertiaryColor: '#FEF2F2'
+    },
+    flowchart: { useMaxWidth: true, curve: 'basis' },
+    sequence: { useMaxWidth: true, mirrorActors: false }
+  });
+</script>
+
+</body>
+</html>
