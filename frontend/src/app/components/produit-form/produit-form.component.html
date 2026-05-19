@@ -1,0 +1,79 @@
+<div class="page-header">
+  <h2>{{ isEditing ? 'Modifier le produit' : 'Nouveau produit' }}</h2>
+  <a routerLink="/produits" class="btn btn-outline">Retour</a>
+</div>
+
+<div *ngIf="loading" class="card" style="text-align: center; padding: 40px;">
+  Chargement...
+</div>
+
+<div *ngIf="!loading" class="card form-card">
+  <form (ngSubmit)="soumettre()">
+
+    <div class="form-row">
+      <div class="form-group flex-2">
+        <label for="designation">Désignation *</label>
+        <input id="designation" type="text" [(ngModel)]="form.designation" name="designation"
+               placeholder="Nom du produit" [class.error]="errors['designation']">
+        <div class="error-msg" *ngIf="errors['designation']">{{ errors['designation'] }}</div>
+      </div>
+
+      <div class="form-group flex-1">
+        <label for="categorie">Catégorie</label>
+        <select id="categorie" [(ngModel)]="form.categorieId" name="categorieId">
+          <option [ngValue]="null">— Aucune —</option>
+          <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" [(ngModel)]="form.description" name="description"
+                placeholder="Description détaillée du produit"></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group flex-1">
+        <label for="prixHT">Prix HT (DH) *</label>
+        <input id="prixHT" type="number" step="0.01" [(ngModel)]="form.prixHT" name="prixHT"
+               placeholder="0.00" [class.error]="errors['prixHT']">
+        <div class="error-msg" *ngIf="errors['prixHT']">{{ errors['prixHT'] }}</div>
+      </div>
+
+      <div class="form-group flex-1">
+        <label for="tauxTVA">Taux TVA (%) *</label>
+        <input id="tauxTVA" type="number" step="0.01" [(ngModel)]="form.tauxTVA" name="tauxTVA"
+               placeholder="20" [class.error]="errors['tauxTVA']">
+        <div class="error-msg" *ngIf="errors['tauxTVA']">{{ errors['tauxTVA'] }}</div>
+      </div>
+
+      <div class="form-group flex-1">
+        <label>Prix TTC (DH)</label>
+        <div class="computed-value">{{ prixTTCCalcule | number:'1.2-2' }} DH</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group flex-1">
+        <label for="quantiteStock">Quantité en stock *</label>
+        <input id="quantiteStock" type="number" [(ngModel)]="form.quantiteStock" name="quantiteStock"
+               placeholder="0" [class.error]="errors['quantiteStock']">
+        <div class="error-msg" *ngIf="errors['quantiteStock']">{{ errors['quantiteStock'] }}</div>
+      </div>
+
+      <div class="form-group flex-1">
+        <label for="seuilAlerte">Seuil d'alerte stock</label>
+        <input id="seuilAlerte" type="number" [(ngModel)]="form.seuilAlerte" name="seuilAlerte"
+               placeholder="10">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="/produits" class="btn btn-outline">Annuler</a>
+      <button type="submit" class="btn btn-primary" [disabled]="submitting">
+        {{ submitting ? 'Enregistrement...' : (isEditing ? 'Enregistrer les modifications' : 'Créer le produit') }}
+      </button>
+    </div>
+  </form>
+</div>
