@@ -1,0 +1,126 @@
+.success-card {
+  text-align: center;
+  padding: 60px 24px;
+
+  .success-content {
+    .success-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--success-light);
+      color: var(--success);
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: 20px;
+      color: var(--success);
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: var(--gray-500);
+    }
+  }
+}
+
+.alertes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alerte-card {
+  border-left: 4px solid;
+
+  &.alerte-critique { border-left-color: var(--danger); }
+  &.alerte-warning { border-left-color: var(--warning); }
+  &.alerte-attention { border-left-color: var(--primary); }
+}
+
+.alerte-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  .alerte-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+}
+
+.ref-badge {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--gray-100);
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--gray-700);
+}
+
+.stock-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  .stock-current {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+
+    .stock-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--danger);
+    }
+  }
+
+  .stock-label {
+    font-size: 13px;
+    color: var(--gray-500);
+  }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+
+    &.progress-critique { background: var(--danger); }
+    &.progress-warning { background: var(--warning); }
+    &.progress-attention { background: var(--primary); }
+  }
+}
+
+.alerte-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .prix {
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+}

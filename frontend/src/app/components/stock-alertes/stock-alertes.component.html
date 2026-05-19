@@ -1,0 +1,71 @@
+<div class="page-header">
+  <h2>Alertes Stock</h2>
+  <button class="btn btn-outline" (click)="charger()">Actualiser</button>
+</div>
+
+<!-- Résumé -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value" style="color: var(--danger);">{{ produitsStockBas.length }}</div>
+    <div class="stat-label">Produits en alerte</div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="card" style="text-align: center; padding: 40px;">
+  Chargement des alertes...
+</div>
+
+<div *ngIf="!loading && produitsStockBas.length === 0" class="card success-card">
+  <div class="success-content">
+    <span class="success-icon">&#10003;</span>
+    <h3>Tout va bien !</h3>
+    <p>Aucun produit n'est en dessous de son seuil d'alerte.</p>
+  </div>
+</div>
+
+<div *ngIf="!loading && produitsStockBas.length > 0" class="alertes-list">
+  <div *ngFor="let produit of produitsStockBas" class="card alerte-card"
+       [ngClass]="'alerte-' + getNiveauUrgence(produit)">
+    <div class="alerte-header">
+      <div class="alerte-info">
+        <span class="ref-badge">{{ produit.reference }}</span>
+        <h3>{{ produit.designation }}</h3>
+      </div>
+      <a [routerLink]="['/produits/modifier', produit.id]" class="btn btn-outline btn-sm">
+        Modifier le stock
+      </a>
+    </div>
+
+    <div class="alerte-details">
+      <div class="stock-info">
+        <div class="stock-current">
+          <span class="stock-number">{{ produit.quantiteStock }}</span>
+          <span class="stock-label">en stock</span>
+        </div>
+        <div class="stock-seuil">
+          <span class="stock-label">Seuil : {{ produit.seuilAlerte }}</span>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill"
+             [style.width.%]="getProgressWidth(produit)"
+             [ngClass]="'progress-' + getNiveauUrgence(produit)">
+        </div>
+      </div>
+
+      <div class="alerte-meta">
+        <span class="badge" [ngClass]="{
+          'badge-danger': getNiveauUrgence(produit) === 'critique',
+          'badge-warning': getNiveauUrgence(produit) === 'warning',
+          'badge-info': getNiveauUrgence(produit) === 'attention'
+        }">
+          {{ getNiveauUrgence(produit) === 'critique' ? 'CRITIQUE' :
+             getNiveauUrgence(produit) === 'warning' ? 'Attention' : 'A surveiller' }}
+        </span>
+        <span *ngIf="produit.categorieNom" class="badge badge-info">{{ produit.categorieNom }}</span>
+        <span class="prix">{{ produit.prixHT | number:'1.2-2' }} DH HT</span>
+      </div>
+    </div>
+  </div>
+</div>
