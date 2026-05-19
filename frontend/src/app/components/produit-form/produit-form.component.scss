@@ -1,14 +1,32 @@
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 32px;
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+
+  .topbar-left {
+    h1 { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+    .breadcrumb { font-size: 13px; color: var(--gray-400); }
+  }
+}
+
+.form-content {
+  padding: 24px 32px;
+}
+
 .form-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+  padding: 28px;
   max-width: 800px;
 }
 
 .form-row {
   display: flex;
   gap: 16px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
 }
 
 .flex-1 { flex: 1; }
@@ -16,7 +34,7 @@
 
 .computed-value {
   padding: 10px 14px;
-  background: var(--gray-100);
+  background: var(--gray-50);
   border: 1px solid var(--gray-200);
   border-radius: 8px;
   font-size: 14px;
@@ -33,10 +51,12 @@
   border-top: 1px solid var(--gray-200);
 }
 
-input.error, select.error, textarea.error {
+input.error, select.error {
   border-color: var(--danger);
+}
 
-  &:focus {
-    box-shadow: 0 0 0 3px var(--danger-light);
-  }
+.loading-state {
+  text-align: center;
+  padding: 60px;
+  color: var(--gray-400);
 }

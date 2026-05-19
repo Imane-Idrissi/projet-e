@@ -1,58 +1,62 @@
 <!-- Toast -->
 <div *ngIf="toast" class="toast" [ngClass]="'toast-' + toast.type">{{ toast.message }}</div>
 
-<div class="page-header">
-  <h2>Catégories</h2>
-  <button class="btn btn-primary" (click)="ouvrirModal()">+ Nouvelle Catégorie</button>
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Catégories</h1>
+    <span class="breadcrumb">Accueil / Produits &amp; Catalogue / Catégories</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-primary" (click)="ouvrirModal()">+ Catégorie</button>
+  </div>
 </div>
 
-<div *ngIf="loading" class="card" style="text-align: center; padding: 40px;">Chargement...</div>
+<div class="categories-content">
+  <div *ngIf="loading" class="loading">Chargement...</div>
 
-<div *ngIf="!loading && categoriesRacines.length === 0" class="card" style="text-align: center; padding: 40px; color: var(--gray-500);">
-  Aucune catégorie. Créez-en une pour organiser vos produits !
-</div>
+  <div *ngIf="!loading && categoriesRacines.length === 0" class="empty">
+    Aucune catégorie. Créez-en une pour organiser vos produits !
+  </div>
 
-<!-- Arborescence des catégories -->
-<div *ngIf="!loading && categoriesRacines.length > 0" class="categories-grid">
-  <div *ngFor="let cat of categoriesRacines" class="category-card card">
-    <div class="category-header">
-      <div>
-        <h3>{{ cat.nom }}</h3>
-        <p class="text-muted" *ngIf="cat.description">{{ cat.description }}</p>
-      </div>
-      <div class="actions">
-        <button class="btn btn-outline btn-sm" (click)="ouvrirModal(cat)">Modifier</button>
-        <button class="btn btn-danger btn-sm" (click)="supprimer(cat)">Supprimer</button>
-      </div>
-    </div>
-
-    <div class="category-stats">
-      <span class="badge badge-info">{{ cat.nombreProduits }} produit(s)</span>
-      <span class="badge badge-warning" *ngIf="cat.sousCategories && cat.sousCategories.length > 0">
-        {{ cat.sousCategories.length }} sous-catégorie(s)
-      </span>
-    </div>
-
-    <!-- Sous-catégories -->
-    <div *ngIf="cat.sousCategories && cat.sousCategories.length > 0" class="sub-categories">
-      <div *ngFor="let sub of cat.sousCategories" class="sub-category">
-        <div class="sub-category-info">
-          <span class="sub-icon">&#8627;</span>
-          <div>
-            <strong>{{ sub.nom }}</strong>
-            <span class="badge badge-info" style="margin-left: 8px;">{{ sub.nombreProduits }} produit(s)</span>
-          </div>
+  <div *ngIf="!loading && categoriesRacines.length > 0" class="categories-grid">
+    <div *ngFor="let cat of categoriesRacines" class="category-card">
+      <div class="category-header">
+        <div>
+          <h3>{{ cat.nom }}</h3>
+          <p class="text-muted" *ngIf="cat.description">{{ cat.description }}</p>
         </div>
-        <div class="actions">
-          <button class="btn btn-outline btn-sm" (click)="ouvrirModal(sub)">Modifier</button>
-          <button class="btn btn-danger btn-sm" (click)="supprimer(sub)">Supprimer</button>
+        <div class="category-actions">
+          <button class="action-link" (click)="ouvrirModal(cat)">Modifier</button>
+          <button class="action-link danger" (click)="supprimer(cat)">Supprimer</button>
+        </div>
+      </div>
+
+      <div class="category-badges">
+        <span class="cat-badge blue">{{ cat.nombreProduits }} produit(s)</span>
+        <span class="cat-badge orange" *ngIf="cat.sousCategories && cat.sousCategories.length > 0">
+          {{ cat.sousCategories.length }} sous-catégorie(s)
+        </span>
+      </div>
+
+      <div *ngIf="cat.sousCategories && cat.sousCategories.length > 0" class="sub-list">
+        <div *ngFor="let sub of cat.sousCategories" class="sub-item">
+          <div class="sub-info">
+            <span class="sub-arrow">&#8627;</span>
+            <strong>{{ sub.nom }}</strong>
+            <span class="cat-badge blue small">{{ sub.nombreProduits }}</span>
+          </div>
+          <div class="category-actions">
+            <button class="action-link" (click)="ouvrirModal(sub)">Modifier</button>
+            <button class="action-link danger" (click)="supprimer(sub)">Supprimer</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal Créer/Modifier -->
+<!-- Modal -->
 <div *ngIf="showModal" class="modal-overlay" (click)="fermerModal()">
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
@@ -61,21 +65,20 @@
     </div>
 
     <div class="form-group">
-      <label for="nom">Nom *</label>
-      <input id="nom" type="text" [(ngModel)]="form.nom" placeholder="Nom de la catégorie">
+      <label>Nom *</label>
+      <input type="text" [(ngModel)]="form.nom" placeholder="Nom de la catégorie">
     </div>
 
     <div class="form-group">
-      <label for="description">Description</label>
-      <textarea id="description" [(ngModel)]="form.description" placeholder="Description optionnelle"></textarea>
+      <label>Description</label>
+      <textarea [(ngModel)]="form.description" placeholder="Description optionnelle"></textarea>
     </div>
 
     <div class="form-group">
-      <label for="parent">Catégorie parente</label>
-      <select id="parent" [(ngModel)]="form.parentId">
+      <label>Catégorie parente</label>
+      <select [(ngModel)]="form.parentId">
         <option [ngValue]="null">— Aucune (catégorie racine) —</option>
-        <option *ngFor="let cat of toutesCategories"
-                [ngValue]="cat.id"
+        <option *ngFor="let cat of toutesCategories" [ngValue]="cat.id"
                 [disabled]="editingCategorie?.id === cat.id">
           {{ cat.nom }}
         </option>

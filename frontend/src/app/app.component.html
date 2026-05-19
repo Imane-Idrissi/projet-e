@@ -1,34 +1,32 @@
-<div class="app-layout" [class.sidebar-collapsed]="!sidebarOpen">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <h2>GC</h2>
-      <span class="sidebar-title">Gestion Commerciale</span>
-    </div>
-    <nav class="sidebar-nav">
-      <a routerLink="/produits" routerLinkActive="active" class="nav-item">
-        <span class="nav-icon">&#128230;</span>
-        <span class="nav-label">Produits</span>
-      </a>
-      <a routerLink="/categories" routerLinkActive="active" class="nav-item">
-        <span class="nav-icon">&#128193;</span>
-        <span class="nav-label">Catégories</span>
-      </a>
-      <a routerLink="/stock-alertes" routerLinkActive="active" class="nav-item">
-        <span class="nav-icon">&#9888;</span>
-        <span class="nav-label">Alertes Stock</span>
-      </a>
-    </nav>
-  </aside>
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-dot"></div>
+    <span class="logo-text">GestCom</span>
+  </div>
 
-  <!-- Main Content -->
-  <main class="main-content">
-    <header class="top-bar">
-      <button class="toggle-btn" (click)="toggleSidebar()">&#9776;</button>
-      <h1>{{ title }}</h1>
-    </header>
-    <div class="content">
-      <router-outlet></router-outlet>
+  <div class="nav-section-label">NAVIGATION</div>
+
+  <nav class="sidebar-nav">
+    <a class="nav-item">Dashboard</a>
+    <a class="nav-item">Commandes</a>
+    <a class="nav-item">Clients</a>
+    <a routerLink="/produits" routerLinkActive="active" class="nav-item">Produits</a>
+    <a class="nav-item">Factures</a>
+    <a class="nav-item">Reporting</a>
+    <a class="nav-item">Notifications</a>
+  </nav>
+
+  <div class="sidebar-profile">
+    <div class="profile-avatar">I</div>
+    <div class="profile-info">
+      <div class="profile-name">Imane Idrissi</div>
+      <div class="profile-role">Admin</div>
     </div>
-  </main>
-</div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>

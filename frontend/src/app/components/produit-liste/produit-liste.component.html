@@ -1,102 +1,69 @@
-<!-- Toast notification -->
-<div *ngIf="toast" class="toast" [ngClass]="'toast-' + toast.type">
-  {{ toast.message }}
-</div>
+<!-- Toast -->
+<div *ngIf="toast" class="toast" [ngClass]="'toast-' + toast.type">{{ toast.message }}</div>
 
-<!-- Page header -->
-<div class="page-header">
-  <h2>Catalogue Produits</h2>
-  <a routerLink="/produits/nouveau" class="btn btn-primary">+ Nouveau Produit</a>
-</div>
-
-<!-- Stats -->
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-value">{{ totalProduits }}</div>
-    <div class="stat-label">Produits actifs</div>
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Produits &amp; Catalogue</h1>
+    <span class="breadcrumb">Accueil / Produits &amp; Catalogue</span>
   </div>
-  <div class="stat-card">
-    <div class="stat-value" [style.color]="produitsStockBas > 0 ? 'var(--danger)' : 'var(--success)'">
-      {{ produitsStockBas }}
+  <div class="topbar-right">
+    <div class="search-input">
+      <input type="text" placeholder="Rechercher...">
     </div>
-    <div class="stat-label">Stock bas</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value">{{ valeurTotaleStock | number:'1.2-2' }} DH</div>
-    <div class="stat-label">Valeur du stock</div>
+    <div class="topbar-avatar">I</div>
   </div>
 </div>
 
-<!-- Filtres de recherche -->
-<div class="card">
-  <div class="filters-bar">
-    <input type="text" placeholder="Rechercher par désignation..."
-           [(ngModel)]="filtreDesignation" (keyup.enter)="rechercher()">
-    <select [(ngModel)]="filtreCategorie">
-      <option [ngValue]="null">Toutes les catégories</option>
-      <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option>
-    </select>
-    <input type="number" placeholder="Prix min" [(ngModel)]="filtrePrixMin" style="width: 120px;">
-    <input type="number" placeholder="Prix max" [(ngModel)]="filtrePrixMax" style="width: 120px;">
-    <button class="btn btn-primary btn-sm" (click)="rechercher()">Rechercher</button>
-    <button class="btn btn-outline btn-sm" (click)="reinitialiserFiltres()">Réinitialiser</button>
+<!-- Filter bar -->
+<div class="filter-bar">
+  <div class="filter-left">
+    <div class="search-input filter-search">
+      <input type="text" placeholder="Référence, libellé..." [(ngModel)]="filtreTexte">
+    </div>
+    <button class="chip" [class.active]="filtreCategorie === null" (click)="setFiltreCategorie(null)">
+      Toutes catégories
+    </button>
+    <button *ngFor="let cat of categories" class="chip"
+            [class.active]="filtreCategorie === cat.id"
+            (click)="setFiltreCategorie(cat.id)">
+      {{ cat.nom }}
+    </button>
   </div>
+  <a routerLink="/produits/nouveau" class="btn btn-primary">+ Produit</a>
 </div>
 
-<!-- Tableau des produits -->
-<div class="card">
-  <div *ngIf="loading" class="loading-state">Chargement...</div>
+<!-- Grille de produits -->
+<div class="products-content">
+  <div *ngIf="loading" class="loading">Chargement...</div>
 
-  <div *ngIf="!loading && produits.length === 0" class="empty-state">
-    Aucun produit trouvé. Commencez par en créer un !
+  <div *ngIf="!loading && produitsFiltres.length === 0" class="empty">
+    Aucun produit trouvé.
   </div>
 
-  <div *ngIf="!loading && produits.length > 0" class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Référence</th>
-          <th>Désignation</th>
-          <th>Catégorie</th>
-          <th>Prix HT</th>
-          <th>Prix TTC</th>
-          <th>Stock</th>
-          <th>Statut</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let produit of produits">
-          <td><span class="ref-badge">{{ produit.reference }}</span></td>
-          <td>
-            <strong>{{ produit.designation }}</strong>
-            <div class="text-muted" *ngIf="produit.description">
-              {{ produit.description | slice:0:60 }}{{ produit.description.length > 60 ? '...' : '' }}
-            </div>
-          </td>
-          <td>
-            <span class="badge badge-info" *ngIf="produit.categorieNom">{{ produit.categorieNom }}</span>
-            <span class="text-muted" *ngIf="!produit.categorieNom">—</span>
-          </td>
-          <td>{{ produit.prixHT | number:'1.2-2' }} DH</td>
-          <td>{{ produit.prixTTC | number:'1.2-2' }} DH</td>
-          <td>
-            <span [ngClass]="produit.stockBas ? 'stock-danger' : 'stock-ok'">
-              {{ produit.quantiteStock }}
-            </span>
-          </td>
-          <td>
-            <span *ngIf="produit.stockBas" class="badge badge-danger">Stock bas</span>
-            <span *ngIf="!produit.stockBas" class="badge badge-success">OK</span>
-          </td>
-          <td>
-            <div class="actions">
-              <a [routerLink]="['/produits/modifier', produit.id]" class="btn btn-outline btn-sm">Modifier</a>
-              <button class="btn btn-danger btn-sm" (click)="archiverProduit(produit)">Archiver</button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div *ngIf="!loading && produitsFiltres.length > 0" class="products-grid">
+    <div *ngFor="let produit of produitsFiltres" class="product-card">
+      <!-- Image zone -->
+      <div class="card-image" [class.stock-alert-bg]="produit.stockBas">
+        <span class="card-icon">{{ getIcon(produit) }}</span>
+        <span *ngIf="produit.stockBas" class="alert-badge">&#9888; Stock</span>
+      </div>
+
+      <!-- Card body -->
+      <div class="card-body">
+        <span class="card-ref">{{ produit.reference }}</span>
+        <h3 class="card-name">{{ produit.designation }}</h3>
+        <div class="card-bottom">
+          <span class="card-price">{{ produit.prixHT | number:'1.0-0':'fr' }} MAD</span>
+          <span class="stock-badge" [class.stock-low]="produit.stockBas" [class.stock-ok]="!produit.stockBas">
+            Stock: {{ produit.quantiteStock }}
+          </span>
+        </div>
+        <div class="card-actions">
+          <a [routerLink]="['/produits/modifier', produit.id]" class="action-link edit">Modifier</a>
+          <button class="action-link archive" (click)="archiverProduit($event, produit)">Archiver</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

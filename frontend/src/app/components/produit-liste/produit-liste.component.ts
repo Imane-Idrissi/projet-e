@@ -21,11 +21,10 @@ export class ProduitListeComponent implements OnInit {
   loading = true;
   toast: { message: string; type: string } | null = null;
 
-  // Filtres de recherche
-  filtreDesignation = '';
+  filtreTexte = '';
   filtreCategorie: number | null = null;
-  filtrePrixMin: number | null = null;
-  filtrePrixMax: number | null = null;
+
+  private icons: string[] = ['💻', '🖥️', '🪑', '📦', '🖨️', '⌨️', '🖱️', '📄'];
 
   constructor(
     private produitService: ProduitService,
@@ -57,57 +56,36 @@ export class ProduitListeComponent implements OnInit {
     });
   }
 
-  rechercher(): void {
-    this.loading = true;
-    this.produitService.rechercher(
-      this.filtreDesignation || undefined,
-      this.filtreCategorie || undefined,
-      this.filtrePrixMin ?? undefined,
-      this.filtrePrixMax ?? undefined
-    ).subscribe({
-      next: (data) => {
-        this.produits = data;
-        this.loading = false;
-      },
-      error: () => {
-        this.showToast('Erreur lors de la recherche', 'error');
-        this.loading = false;
-      }
+  get produitsFiltres(): Produit[] {
+    return this.produits.filter(p => {
+      const matchTexte = !this.filtreTexte ||
+        p.designation.toLowerCase().includes(this.filtreTexte.toLowerCase()) ||
+        p.reference.toLowerCase().includes(this.filtreTexte.toLowerCase());
+      const matchCat = this.filtreCategorie === null || p.categorieId === this.filtreCategorie;
+      return matchTexte && matchCat;
     });
   }
 
-  reinitialiserFiltres(): void {
-    this.filtreDesignation = '';
-    this.filtreCategorie = null;
-    this.filtrePrixMin = null;
-    this.filtrePrixMax = null;
-    this.chargerProduits();
+  setFiltreCategorie(id: number | null): void {
+    this.filtreCategorie = id;
   }
 
-  archiverProduit(produit: Produit): void {
+  getIcon(produit: Produit): string {
+    const idx = produit.id ? produit.id % this.icons.length : 0;
+    return this.icons[idx];
+  }
+
+  archiverProduit(event: Event, produit: Produit): void {
+    event.stopPropagation();
     if (!confirm(`Archiver le produit "${produit.designation}" ?`)) return;
 
     this.produitService.archiverProduit(produit.id).subscribe({
       next: () => {
-        this.showToast(`Produit "${produit.designation}" archivé`, 'success');
+        this.showToast(`"${produit.designation}" archivé`, 'success');
         this.chargerProduits();
       },
-      error: () => {
-        this.showToast('Erreur lors de l\'archivage', 'error');
-      }
+      error: () => this.showToast('Erreur lors de l\'archivage', 'error')
     });
-  }
-
-  get totalProduits(): number {
-    return this.produits.length;
-  }
-
-  get produitsStockBas(): number {
-    return this.produits.filter(p => p.stockBas).length;
-  }
-
-  get valeurTotaleStock(): number {
-    return this.produits.reduce((total, p) => total + (p.prixHT * p.quantiteStock), 0);
   }
 
   showToast(message: string, type: string): void {
