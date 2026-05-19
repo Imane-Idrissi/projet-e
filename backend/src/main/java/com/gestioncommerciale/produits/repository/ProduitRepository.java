@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -29,8 +31,8 @@ public interface ProduitRepository extends JpaRepository<Produit, Long> {
     long countByCategorieIdAndActifTrue(Long categorieId);
 
     // Dernière référence pour génération auto (RG-PRD-01)
-    @Query("SELECT p.reference FROM Produit p ORDER BY p.id DESC LIMIT 1")
-    Optional<String> findDerniereReference();
+    @Query("SELECT p.reference FROM Produit p ORDER BY p.id DESC")
+    List<String> findDerniereReference(Pageable pageable);
 
     // Recherche multi-critères
     @Query("SELECT p FROM Produit p WHERE p.actif = true " +

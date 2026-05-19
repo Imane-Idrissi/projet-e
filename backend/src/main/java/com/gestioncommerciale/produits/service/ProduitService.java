@@ -128,12 +128,12 @@ public class ProduitService {
 
     // Génération automatique de référence PRD-XXXXX (RG-PRD-01)
     private String genererReference() {
-        return produitRepository.findDerniereReference()
-                .map(ref -> {
-                    int numero = Integer.parseInt(ref.substring(4)) + 1;
-                    return String.format("PRD-%05d", numero);
-                })
-                .orElse("PRD-00001");
+        List<String> refs = produitRepository.findDerniereReference(org.springframework.data.domain.PageRequest.of(0, 1));
+        if (!refs.isEmpty()) {
+            int numero = Integer.parseInt(refs.get(0).substring(4)) + 1;
+            return String.format("PRD-%05d", numero);
+        }
+        return "PRD-00001";
     }
 
     // Conversion entité vers DTO

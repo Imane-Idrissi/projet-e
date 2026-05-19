@@ -3,6 +3,7 @@
 # =============================================================
 #  Script de lancement — Gestion Commerciale (Module Produits)
 #  Usage : ./start.sh
+#  Base H2 en mémoire — aucune dépendance Docker requise
 # =============================================================
 
 set -e
@@ -29,25 +30,13 @@ cleanup() {
     echo -e "${YELLOW}Arrêt des services...${NC}"
     [ -n "$BACKEND_PID" ] && kill "$BACKEND_PID" 2>/dev/null
     [ -n "$FRONTEND_PID" ] && kill "$FRONTEND_PID" 2>/dev/null
-    docker stop gestion-commerciale-db 2>/dev/null
     echo -e "${GREEN}Tous les services sont arrêtés.${NC}"
     exit 0
 }
 trap cleanup INT TERM
 
 # ---- 1. Vérification des prérequis ----
-echo -e "${YELLOW}[1/5] Vérification des prérequis...${NC}"
-
-# Docker
-if ! command -v docker &>/dev/null; then
-    echo -e "${RED}Docker n'est pas installé. Installe Docker Desktop : https://docker.com${NC}"
-    exit 1
-fi
-if ! docker info &>/dev/null; then
-    echo -e "${RED}Docker n'est pas démarré. Lance Docker Desktop d'abord.${NC}"
-    exit 1
-fi
-echo "  ✓ Docker OK"
+echo -e "${YELLOW}[1/4] Vérification des prérequis...${NC}"
 
 # Node.js
 if ! command -v node &>/dev/null; then
@@ -60,7 +49,6 @@ echo "  ✓ Node.js $(node -v)"
 if ! command -v java &>/dev/null || ! java -version 2>&1 | grep -q "version"; then
     echo -e "${YELLOW}  Java non trouvé, installation de OpenJDK 17 via Homebrew...${NC}"
     brew install openjdk@17
-    echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
     export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
     export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
 fi
@@ -77,39 +65,17 @@ if ! java -version 2>&1 | grep -q "version"; then
 fi
 echo "  ✓ Java $(java -version 2>&1 | head -1)"
 
-# Maven (via wrapper ou installation)
-if [ ! -f "$BACKEND_DIR/mvnw" ] || [ ! -f "$BACKEND_DIR/.mvn/wrapper/maven-wrapper.jar" ]; then
-    if ! command -v mvn &>/dev/null; then
-        echo -e "${YELLOW}  Maven non trouvé, installation via Homebrew...${NC}"
-        brew install maven
-    fi
+# Maven
+if ! command -v mvn &>/dev/null; then
+    echo -e "${YELLOW}  Maven non trouvé, installation via Homebrew...${NC}"
+    brew install maven
 fi
 echo "  ✓ Maven OK"
 
 echo ""
 
-# ---- 2. Démarrage PostgreSQL ----
-echo -e "${YELLOW}[2/5] Démarrage de PostgreSQL...${NC}"
-cd "$PROJECT_DIR"
-
-if docker ps --format '{{.Names}}' | grep -q gestion-commerciale-db; then
-    echo "  ✓ PostgreSQL déjà en cours d'exécution"
-else
-    docker-compose up -d db
-    echo "  Attente du démarrage de PostgreSQL..."
-    for i in $(seq 1 30); do
-        if docker exec gestion-commerciale-db pg_isready -U app_user &>/dev/null; then
-            break
-        fi
-        sleep 1
-    done
-    echo "  ✓ PostgreSQL démarré sur le port 5432"
-fi
-
-echo ""
-
-# ---- 3. Installation des dépendances frontend ----
-echo -e "${YELLOW}[3/5] Installation des dépendances frontend...${NC}"
+# ---- 2. Installation des dépendances frontend ----
+echo -e "${YELLOW}[2/4] Installation des dépendances frontend...${NC}"
 cd "$FRONTEND_DIR"
 if [ ! -d "node_modules" ]; then
     npm install
@@ -119,19 +85,14 @@ fi
 
 echo ""
 
-# ---- 4. Démarrage du backend Spring Boot ----
-echo -e "${YELLOW}[4/5] Démarrage du backend Spring Boot (port 8080)...${NC}"
+# ---- 3. Démarrage du backend Spring Boot (H2 en mémoire) ----
+echo -e "${YELLOW}[3/4] Démarrage du backend Spring Boot (port 8080)...${NC}"
+echo "  Base de données H2 en mémoire (aucune config externe requise)"
 cd "$BACKEND_DIR"
 
-if command -v mvn &>/dev/null; then
-    mvn spring-boot:run -q &
-else
-    chmod +x mvnw 2>/dev/null
-    ./mvnw spring-boot:run -q &
-fi
+mvn spring-boot:run -q &
 BACKEND_PID=$!
 
-# Attendre que le backend soit prêt
 echo "  Compilation et démarrage en cours..."
 for i in $(seq 1 120); do
     if curl -s http://localhost:8080/api/produits &>/dev/null; then
@@ -139,15 +100,15 @@ for i in $(seq 1 120); do
         break
     fi
     if [ $i -eq 120 ]; then
-        echo -e "  ${YELLOW}⏳ Le backend met du temps à démarrer, on continue...${NC}"
+        echo -e "  ${YELLOW}Le backend met du temps, on continue...${NC}"
     fi
     sleep 2
 done
 
 echo ""
 
-# ---- 5. Démarrage du frontend Angular ----
-echo -e "${YELLOW}[5/5] Démarrage du frontend Angular (port 4200)...${NC}"
+# ---- 4. Démarrage du frontend Angular ----
+echo -e "${YELLOW}[4/4] Démarrage du frontend Angular (port 4200)...${NC}"
 cd "$FRONTEND_DIR"
 npx ng serve --open &
 FRONTEND_PID=$!
@@ -157,12 +118,11 @@ echo -e "${GREEN}=================================================${NC}"
 echo -e "${GREEN}   Tout est lancé !                               ${NC}"
 echo -e "${GREEN}=================================================${NC}"
 echo ""
-echo -e "  Frontend :  ${CYAN}http://localhost:4200${NC}"
-echo -e "  Backend  :  ${CYAN}http://localhost:8080/api/produits${NC}"
-echo -e "  Base DB  :  ${CYAN}localhost:5432 (gestion_commerciale)${NC}"
+echo -e "  Frontend  :  ${CYAN}http://localhost:4200${NC}"
+echo -e "  API REST  :  ${CYAN}http://localhost:8080/api/produits${NC}"
+echo -e "  Console H2:  ${CYAN}http://localhost:8080/h2-console${NC}"
 echo ""
 echo -e "  ${YELLOW}Appuie sur Ctrl+C pour tout arrêter${NC}"
 echo ""
 
-# Attendre (garde le script en vie)
 wait
